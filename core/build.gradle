@@ -5,5 +5,5 @@ dependencies {
 	api "com.badlogicgames.gdx:gdx:$gdxVersion"
 	api "com.badlogicgames.gdx-controllers:gdx-controllers-core:$gdxControllersVersion"
 //	api 'com.github.bploeckelman:libtest:master-SNAPSHOT'
-	api 'com.github.bploeckelman:libtest:ea64fe6'
+	api 'com.github.bploeckelman:libtest:45eeb7f'
 }
