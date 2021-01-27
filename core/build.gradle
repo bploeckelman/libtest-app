@@ -4,6 +4,5 @@ eclipse.project.name = appName + '-core'
 dependencies {
 	api "com.badlogicgames.gdx:gdx:$gdxVersion"
 	api "com.badlogicgames.gdx-controllers:gdx-controllers-core:$gdxControllersVersion"
-	api 'com.github.bploeckelman.zenlib:zenlib-core:4535ce2'
-//	api 'com.github.bploeckelman:libtest:single-module'
+	api "com.github.bploeckelman.zenlib:zenlib-core:$zenlibVersion"
 }

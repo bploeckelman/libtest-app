@@ -34,8 +34,7 @@ dependencies {
 	implementation "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion:sources"
 	implementation "com.badlogicgames.gdx-controllers:gdx-controllers-core:$gdxControllersVersion:sources"
 	implementation "com.badlogicgames.gdx-controllers:gdx-controllers-gwt:$gdxControllersVersion:sources"
-	implementation "com.github.bploeckelman.zenlib:zenlib-core:4535ce2:sources"
-//	implementation "com.github.bploeckelman:libtest:45eeb7f:sources"
+	implementation "com.github.bploeckelman.zenlib:zenlib-core:$zenlibVersion:sources"
 }
 
 import org.akhikhl.gretty.AppBeforeIntegrationTestTask
