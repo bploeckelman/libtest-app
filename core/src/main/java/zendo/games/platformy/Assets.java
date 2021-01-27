@@ -1,19 +1,13 @@
 package zendo.games.platformy;
 
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.PixmapPacker;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import zendo.games.zenlib.assets.Content;
-import zendo.games.zenlib.assets.Sprite;
-import zendo.games.zenlib.utils.Aseprite;
 
 public class Assets extends Content {
-
-    private static final boolean output_aseprite_atlas_as_png = false;
 
     public static BitmapFont font;
     public static TiledMap tiledMap;
@@ -26,44 +20,44 @@ public class Assets extends Content {
         pixel = new Texture("pixel.png");
         pixel.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
 
-        // create a pixmap packer to generate a texture atlas from aseprite frames
-        int pageWidth = 1024;
-        int pageHeight = 1024;
-        Pixmap.Format pageFormat = Pixmap.Format.RGBA8888;
-        int padding = 0;
-        boolean duplicateBorder = false;
-        boolean stripWhitespaceX = false;
-        boolean stripWhitespaceY = false;
-        PixmapPacker.PackStrategy packStrategy = new PixmapPacker.GuillotineStrategy();
-        PixmapPacker packer = new PixmapPacker(
-                pageWidth, pageHeight, pageFormat, padding,
-                duplicateBorder, stripWhitespaceX, stripWhitespaceY,
-                packStrategy);
-
-        // load aseprite files and pack animation frame pixmaps
-        Aseprite.SpriteInfo playerSpriteInfo = Aseprite.loadAndPack(packer, "sprites/player.ase");
-        Aseprite.SpriteInfo blobSpriteInfo = Aseprite.loadAndPack(packer, "sprites/blob.ase");
-        Aseprite.SpriteInfo popSpriteInfo = Aseprite.loadAndPack(packer, "sprites/pop.ase");
-
-        // create texture atlas from packer
-        Texture.TextureFilter filter = Texture.TextureFilter.Nearest;
-        boolean useMipMaps = false;
-        atlas = packer.generateTextureAtlas(filter, filter, useMipMaps);
-
-        // cleanup packer
-        packer.dispose();
-
-        // create sprites (and dispose pixmaps in SpriteInfo.Aseprite)
-        Sprite player = Aseprite.createSprite(playerSpriteInfo, atlas);
-        Sprite blob = Aseprite.createSprite(blobSpriteInfo, atlas);
-        Sprite pop = Aseprite.createSprite(popSpriteInfo, atlas);
-
-        // save the loaded sprites
-        sprites.addAll(
-                  player
-                , blob
-                , pop
-        );
+//        // create a pixmap packer to generate a texture atlas from aseprite frames
+//        int pageWidth = 1024;
+//        int pageHeight = 1024;
+//        Pixmap.Format pageFormat = Pixmap.Format.RGBA8888;
+//        int padding = 0;
+//        boolean duplicateBorder = false;
+//        boolean stripWhitespaceX = false;
+//        boolean stripWhitespaceY = false;
+//        PixmapPacker.PackStrategy packStrategy = new PixmapPacker.GuillotineStrategy();
+//        PixmapPacker packer = new PixmapPacker(
+//                pageWidth, pageHeight, pageFormat, padding,
+//                duplicateBorder, stripWhitespaceX, stripWhitespaceY,
+//                packStrategy);
+//
+//        // load aseprite files and pack animation frame pixmaps
+//        Aseprite.SpriteInfo playerSpriteInfo = Aseprite.loadAndPack(packer, "sprites/player.ase");
+//        Aseprite.SpriteInfo blobSpriteInfo = Aseprite.loadAndPack(packer, "sprites/blob.ase");
+//        Aseprite.SpriteInfo popSpriteInfo = Aseprite.loadAndPack(packer, "sprites/pop.ase");
+//
+//        // create texture atlas from packer
+//        Texture.TextureFilter filter = Texture.TextureFilter.Nearest;
+//        boolean useMipMaps = false;
+//        atlas = packer.generateTextureAtlas(filter, filter, useMipMaps);
+//
+//        // cleanup packer
+//        packer.dispose();
+//
+//        // create sprites (and dispose pixmaps in SpriteInfo.Aseprite)
+//        Sprite player = Aseprite.createSprite(playerSpriteInfo, atlas);
+//        Sprite blob = Aseprite.createSprite(blobSpriteInfo, atlas);
+//        Sprite pop = Aseprite.createSprite(popSpriteInfo, atlas);
+//
+//        // save the loaded sprites
+//        sprites.addAll(
+//                  player
+//                , blob
+//                , pop
+//        );
 
         // write out the aseprite texture atlas for debugging purposes if so desired
 //        if (output_aseprite_atlas_as_png) {

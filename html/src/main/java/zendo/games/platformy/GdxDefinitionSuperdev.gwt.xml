@@ -7,7 +7,4 @@
 	<add-linker name="xsiframe"/>
 	<set-configuration-property name="devModeRedirectEnabled" value="true"/>
 	<set-configuration-property name="xsiframe.failIfScriptTag" value="FALSE"/>
-	<extend-configuration-property name="gdx.reflect.include" value="zendo.games.zenlib.ecs.World" />
-	<extend-configuration-property name="gdx.reflect.include" value="zendo.games.zenlib.ecs.Component" />
-	<extend-configuration-property name="gdx.reflect.include" value="zendo.games.zenlib.ecs.components" />
 </module>

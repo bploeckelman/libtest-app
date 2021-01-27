@@ -10,9 +10,16 @@ dependencies {
 	implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
 	implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
 	implementation "com.badlogicgames.gdx-controllers:gdx-controllers-desktop:$gdxControllersVersion"
+	api "com.github.bploeckelman.zenlib:zenlib-desktop:4535ce2"
 }
 
 import org.gradle.internal.os.OperatingSystem
+
+task pack_aseprites(dependsOn: classes, type: JavaExec) {
+	main = 'zendo.games.zenlib.aseprite.AsepritePacker'
+	classpath = sourceSets.main.runtimeClasspath
+	args = ['../sprites/', '../assets/atlas/', 'sprites.atlas']
+}
 
 run {
 	workingDir = rootProject.file('assets').path
