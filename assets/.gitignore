@@ -1,1 +1,3 @@
+# these dirs are auto generated/populated by lwjgl3:pack_aseprites gradle task
 atlas/
+sprites/
