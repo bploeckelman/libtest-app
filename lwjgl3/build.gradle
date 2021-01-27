@@ -18,7 +18,7 @@ import org.gradle.internal.os.OperatingSystem
 task pack_aseprites(dependsOn: classes, type: JavaExec) {
 	main = 'zendo.games.zenlib.aseprite.AsepritePacker'
 	classpath = sourceSets.main.runtimeClasspath
-	args = ['../sprites/', '../assets/atlas/', 'sprites.atlas']
+	args = ['../sprites/', '../assets/sprites/', '../assets/atlas/', 'sprites.atlas']
 }
 
 run {

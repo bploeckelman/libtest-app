@@ -208,7 +208,7 @@ public class TestMain implements Game {
         frameBufferTexture.dispose();
         frameBuffer.dispose();
         batch.dispose();
-        Content.unload();
+        Assets.unload();
     }
 
     // ------------------------------------------------------------------------

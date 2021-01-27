@@ -20,53 +20,13 @@ public class Assets extends Content {
         pixel = new Texture("pixel.png");
         pixel.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
 
-//        // create a pixmap packer to generate a texture atlas from aseprite frames
-//        int pageWidth = 1024;
-//        int pageHeight = 1024;
-//        Pixmap.Format pageFormat = Pixmap.Format.RGBA8888;
-//        int padding = 0;
-//        boolean duplicateBorder = false;
-//        boolean stripWhitespaceX = false;
-//        boolean stripWhitespaceY = false;
-//        PixmapPacker.PackStrategy packStrategy = new PixmapPacker.GuillotineStrategy();
-//        PixmapPacker packer = new PixmapPacker(
-//                pageWidth, pageHeight, pageFormat, padding,
-//                duplicateBorder, stripWhitespaceX, stripWhitespaceY,
-//                packStrategy);
-//
-//        // load aseprite files and pack animation frame pixmaps
-//        Aseprite.SpriteInfo playerSpriteInfo = Aseprite.loadAndPack(packer, "sprites/player.ase");
-//        Aseprite.SpriteInfo blobSpriteInfo = Aseprite.loadAndPack(packer, "sprites/blob.ase");
-//        Aseprite.SpriteInfo popSpriteInfo = Aseprite.loadAndPack(packer, "sprites/pop.ase");
-//
-//        // create texture atlas from packer
-//        Texture.TextureFilter filter = Texture.TextureFilter.Nearest;
-//        boolean useMipMaps = false;
-//        atlas = packer.generateTextureAtlas(filter, filter, useMipMaps);
-//
-//        // cleanup packer
-//        packer.dispose();
-//
-//        // create sprites (and dispose pixmaps in SpriteInfo.Aseprite)
-//        Sprite player = Aseprite.createSprite(playerSpriteInfo, atlas);
-//        Sprite blob = Aseprite.createSprite(blobSpriteInfo, atlas);
-//        Sprite pop = Aseprite.createSprite(popSpriteInfo, atlas);
-//
-//        // save the loaded sprites
-//        sprites.addAll(
-//                  player
-//                , blob
-//                , pop
-//        );
-
-        // write out the aseprite texture atlas for debugging purposes if so desired
-//        if (output_aseprite_atlas_as_png) {
-//            Texture atlas_texture = atlas.getTextures().first();
-//            Pixmap atlas_pixmap = atlas_texture.getTextureData().consumePixmap();
-//            FileHandle file = new FileHandle("aseprite_atlas.png");
-//            PixmapIO.writePNG(file, atlas_pixmap);
-//            atlas_pixmap.dispose();
-//        }
+        // load sprites
+        atlas = new TextureAtlas("atlas/sprites.atlas");
+        sprites.addAll(
+                  Content.loadSprite("sprites/player.json", atlas)
+                , Content.loadSprite("sprites/blob.json", atlas)
+                , Content.loadSprite("sprites/pop.json", atlas)
+        );
     }
 
     public static void unload() {
