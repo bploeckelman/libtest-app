@@ -62,83 +62,11 @@ public class TestMain implements Game {
 
         world = new World();
 
-        loadMap();
+        Assets.loadMap("maps/room_0x0.tmx", world);
 
         Player player = world.first(Player.class);
         worldCamera.position.set(player.entity().position.x, player.entity().position.y, 0);
         worldCamera.update();
-    }
-
-    private void loadMap() {
-        // get tiled map parameters
-        TiledMapTileLayer collisionLayer = (TiledMapTileLayer) Assets.tiledMap.getLayers().get("collision");
-        int tileSize = collisionLayer.getTileWidth();
-        int columns = collisionLayer.getWidth();
-        int rows = collisionLayer.getHeight();
-
-        // create a map entity
-        Entity map = world.addEntity();
-
-        // add a tilemap component for textures
-        Tilemap tilemap = map.add(new Tilemap(), Tilemap.class);
-        tilemap.init(tileSize, columns, rows);
-
-        // add a collider component
-        Collider solids = map.add(Collider.makeGrid(tileSize, columns, rows), Collider.class);
-        solids.mask = Mask.solid;
-
-        // parse the tiled map layers
-        for (MapLayer layer : Assets.tiledMap.getLayers()) {
-            // parse tile layers
-            if (layer instanceof TiledMapTileLayer) {
-                TiledMapTileLayer tileLayer = (TiledMapTileLayer) layer;
-
-                for (int x = 0; x < columns; x++) {
-                    for (int y = 0; y < rows; y++) {
-                        // skip empty cells
-                        TiledMapTileLayer.Cell cell = tileLayer.getCell(x, y);
-                        if (cell == null) continue;
-
-                        // determine what type of layer this is
-                        boolean isCollision = "collision".equals(layer.getName());
-                        boolean isBackground = "background".equals(layer.getName());
-
-                        // only collision layer tiles are used to populate the collider grid
-                        if (isCollision) {
-                            solids.setCell(x, y, true);
-                        }
-
-                        // both collision and background layers are used to set tile textures
-                        if (isCollision || isBackground) {
-                            tilemap.setCell(x, y, cell.getTile().getTextureRegion());
-                        }
-                    }
-                }
-            }
-            // parse objects layer
-            else if ("objects".equals(layer.getName())) {
-                Array<TiledMapTileMapObject> objects = layer.getObjects().getByType(TiledMapTileMapObject.class);
-                for (TiledMapTileMapObject object : objects) {
-                    // parse position property from object
-                    // scale to specified tileSize in case it's different than the tiled map tile size
-                    // this way the scale of the map onscreen can be changed by adjusting the tileSize parameter
-                    Point position = Point.at(
-                            (int) (object.getX() / collisionLayer.getTileWidth())   * tileSize,
-                            (int) (object.getY() / collisionLayer.getTileHeight())  * tileSize);
-
-                    // parse the object type
-                    String type = (String) object.getProperties().get("type");
-                    if ("spawner".equals(type)) {
-                        // figure out what to spawn and do so
-                        String target = (String) object.getProperties().get("target");
-                        switch (target) {
-                            case "player": Factory.player(world, position); break;
-                            case "blob":   Factory.blob(world, position);   break;
-                        }
-                    }
-                }
-            }
-        }
     }
 
     @Override
