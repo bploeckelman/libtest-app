@@ -172,6 +172,8 @@ public class TestMain implements Game {
 
         world.update(dt);
 
+        // TODO: change to check for another room attached to this room at the out-of-bounds point and transition to a new room if one exists
+
         // keep player in bounds
         Collider.Grid solids = world.first(Tilemap.class).entity().get(Collider.class).getGrid();
         RectI bounds = RectI.at(0, 0, solids.columns * solids.tileSize, solids.rows * solids.tileSize);
