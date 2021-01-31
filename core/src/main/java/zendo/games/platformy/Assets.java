@@ -1,10 +1,10 @@
 package zendo.games.platformy;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.MapLayer;
-import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject;
@@ -19,11 +19,13 @@ import zendo.games.zenlib.utils.Point;
 
 public class Assets extends Content {
 
+    private static final String tag = Assets.class.getSimpleName();
+
     public static BitmapFont font;
     public static Texture pixel;
     private static TextureAtlas atlas;
 
-    public static TiledMap tiledMap;
+    public static Array<Room> rooms;
 
     public static void load() {
         font = new BitmapFont();
@@ -41,92 +43,154 @@ public class Assets extends Content {
 
     public static void unload() {
         Content.unload();
+        Assets.unloadRooms();
 
-        tiledMap.dispose();
         atlas.dispose();
         pixel.dispose();
         font.dispose();
     }
 
-    public static void loadMap(String filename, World world) {
-        // cleanup existing map
-        if (tiledMap != null) {
-            tiledMap.dispose();
+    public static void loadRooms(World world) {
+        if (rooms == null) {
+            rooms = new Array<>();
+        } else {
+            Assets.unloadRooms();
         }
 
-        // load the map
-        tiledMap = new TmxMapLoader().load(filename);
+        rooms.add(loadRoom(Point.at(0, 0), world));
+        rooms.add(loadRoom(Point.at(1, 0), world));
+    }
 
-        // get tiled map parameters
-        TiledMapTileLayer collisionLayer = (TiledMapTileLayer) tiledMap.getLayers().get("collision");
-        int tileSize = collisionLayer.getTileWidth();
-        int columns = collisionLayer.getWidth();
-        int rows = collisionLayer.getHeight();
+    public static Room findRoom(Point coord) {
+        if (rooms == null) {
+            return null;
+        }
 
-        // create a map entity
-        Entity map = world.addEntity();
+        for (Room room : rooms) {
+            if (room.coord.x == coord.x && room.coord.y == coord.y) {
+                return room;
+            }
+        }
+        return null;
+    }
 
-        // add a tilemap component for textures
-        Tilemap tilemap = map.add(new Tilemap(), Tilemap.class);
-        tilemap.init(tileSize, columns, rows);
+    public static void unloadRooms() {
+        for (Room room : rooms) {
+            if (room.map != null) {
+                room.map.dispose();
+            }
+            if (room.tilemap != null ){
+                room.tilemap.destroy();
+            }
+            if (room.solids != null) {
+                room.solids.destroy();
+            }
+        }
+        rooms.clear();
+    }
 
-        // add a collider component
-        Collider solids = map.add(Collider.makeGrid(tileSize, columns, rows), Collider.class);
-        solids.mask = Mask.solid;
+    public static Room loadRoom(Point coord, World world) {
+        String filename = "maps/room_" + coord.x + "x" + coord.y + ".tmx";
+        if (!Gdx.files.internal(filename).exists()) {
+            Gdx.app.log(tag, "Unable to load room, map file does not exist: " + filename);
+            return null;
+        }
 
-        // parse the tiled map layers
-        for (MapLayer layer : tiledMap.getLayers()) {
-            // parse tile layers
-            if (layer instanceof TiledMapTileLayer) {
-                TiledMapTileLayer tileLayer = (TiledMapTileLayer) layer;
+        Room room = new Room();
+        {
+            room.coord.set(coord.x, coord.y);
 
-                for (int x = 0; x < columns; x++) {
-                    for (int y = 0; y < rows; y++) {
-                        // skip empty cells
-                        TiledMapTileLayer.Cell cell = tileLayer.getCell(x, y);
-                        if (cell == null) continue;
+            // load the map
+            room.map = new TmxMapLoader().load(filename);
 
-                        // determine what type of layer this is
-                        boolean isCollision = "collision".equals(layer.getName());
-                        boolean isBackground = "background".equals(layer.getName());
+            // get tiled map parameters
+            TiledMapTileLayer collisionLayer = (TiledMapTileLayer) room.map.getLayers().get("collision");
+            int tileSize = collisionLayer.getTileWidth();
+            int columns = collisionLayer.getWidth();
+            int rows = collisionLayer.getHeight();
 
-                        // only collision layer tiles are used to populate the collider grid
-                        if (isCollision) {
-                            solids.setCell(x, y, true);
+            // set the room size (in pixels)
+            room.size.set(columns * tileSize, rows * tileSize);
+
+            // find the original by checking for neighbors
+            // TODO: add map objects to tie adjacent rooms together
+            Room leftRoom = findRoom(Point.at(room.coord.x - 1, room.coord.y));
+            if (leftRoom != null) {
+                room.origin.x += leftRoom.origin.x + leftRoom.size.x;
+            }
+
+            // create a map entity
+            // TODO: instead of origin, could set entity.position
+            Entity map = world.addEntity();
+
+            // add a tilemap component for textures
+            room.tilemap = map.add(new Tilemap(), Tilemap.class);
+            room.tilemap.init(tileSize, columns, rows);
+            room.tilemap.origin.set(room.origin.x, room.origin.y);
+
+            // add a collider component
+            room.solids = map.add(Collider.makeGrid(tileSize, columns, rows), Collider.class);
+            room.solids.mask = Mask.solid;
+            room.solids.origin.set(room.origin.x, room.origin.y);
+
+            // parse the tiled map layers
+            for (MapLayer layer : room.map.getLayers()) {
+                // parse tile layers
+                if (layer instanceof TiledMapTileLayer) {
+                    TiledMapTileLayer tileLayer = (TiledMapTileLayer) layer;
+
+                    for (int x = 0; x < columns; x++) {
+                        for (int y = 0; y < rows; y++) {
+                            // skip empty cells
+                            TiledMapTileLayer.Cell cell = tileLayer.getCell(x, y);
+                            if (cell == null) continue;
+
+                            // determine what type of layer this is
+                            boolean isCollision = "collision".equals(layer.getName());
+                            boolean isBackground = "background".equals(layer.getName());
+
+                            // only collision layer tiles are used to populate the collider grid
+                            if (isCollision) {
+                                room.solids.setCell(x, y, true);
+                            }
+
+                            // both collision and background layers are used to set tile textures
+                            if (isCollision || isBackground) {
+                                room.tilemap.setCell(x, y, cell.getTile().getTextureRegion());
+                            }
                         }
+                    }
+                }
+                // parse objects layer
+                else if ("objects".equals(layer.getName())) {
+                    Array<TiledMapTileMapObject> objects = layer.getObjects().getByType(TiledMapTileMapObject.class);
+                    for (TiledMapTileMapObject object : objects) {
+                        // parse position property from object
+                        // scale to specified tileSize in case it's different than the tiled map tile size
+                        // this way the scale of the map onscreen can be changed by adjusting the tileSize parameter
+                        Point position = Point.at(
+                                (int) (object.getX() / collisionLayer.getTileWidth()) * tileSize,
+                                (int) (object.getY() / collisionLayer.getTileHeight()) * tileSize);
 
-                        // both collision and background layers are used to set tile textures
-                        if (isCollision || isBackground) {
-                            tilemap.setCell(x, y, cell.getTile().getTextureRegion());
+                        // parse the object type
+                        String type = (String) object.getProperties().get("type");
+                        if ("spawner".equals(type)) {
+                            // figure out what to spawn and do so
+                            String target = (String) object.getProperties().get("target");
+                            switch (target) {
+                                case "player":
+                                    Factory.player(world, position);
+                                    break;
+                                case "blob":
+                                    Factory.blob(world, position);
+                                    break;
+                            }
                         }
                     }
                 }
             }
-            // parse objects layer
-            else if ("objects".equals(layer.getName())) {
-                Array<TiledMapTileMapObject> objects = layer.getObjects().getByType(TiledMapTileMapObject.class);
-                for (TiledMapTileMapObject object : objects) {
-                    // parse position property from object
-                    // scale to specified tileSize in case it's different than the tiled map tile size
-                    // this way the scale of the map onscreen can be changed by adjusting the tileSize parameter
-                    Point position = Point.at(
-                            (int) (object.getX() / collisionLayer.getTileWidth())   * tileSize,
-                            (int) (object.getY() / collisionLayer.getTileHeight())  * tileSize);
-
-                    // parse the object type
-                    String type = (String) object.getProperties().get("type");
-                    if ("spawner".equals(type)) {
-                        // figure out what to spawn and do so
-                        String target = (String) object.getProperties().get("target");
-                        switch (target) {
-                            case "player": Factory.player(world, position); break;
-                            case "blob":   Factory.blob(world, position);   break;
-                        }
-                    }
-                }
-            }
         }
-
+        return room;
     }
 
 }

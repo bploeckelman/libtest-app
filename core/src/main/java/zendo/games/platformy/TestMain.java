@@ -40,6 +40,7 @@ public class TestMain implements Game {
 
     OrthographicCamera worldCamera;
     World world;
+    Room room;
 
     @Override
     public void init() {
@@ -62,7 +63,8 @@ public class TestMain implements Game {
 
         world = new World();
 
-        Assets.loadMap("maps/room_0x0.tmx", world);
+        Assets.loadRooms(world);
+        room = Assets.findRoom(Point.at(0, 0));
 
         Player player = world.first(Player.class);
         worldCamera.position.set(player.entity().position.x, player.entity().position.y, 0);
@@ -89,7 +91,7 @@ public class TestMain implements Game {
                 Debug.draw_origin = !Debug.draw_origin;
             }
 
-            if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.F4)) {
                 Debug.frame_step = !Debug.frame_step;
             }
 
@@ -103,12 +105,13 @@ public class TestMain implements Game {
         // TODO: change to check for another room attached to this room at the out-of-bounds point and transition to a new room if one exists
 
         // keep player in bounds
-        Collider.Grid solids = world.first(Tilemap.class).entity().get(Collider.class).getGrid();
+//        Collider.Grid solids = world.first(Tilemap.class).entity().get(Collider.class).getGrid();
+        Collider.Grid solids = room.solids.getGrid();
         RectI bounds = RectI.at(0, 0, solids.columns * solids.tileSize, solids.rows * solids.tileSize);
 
         Player player = world.first(Player.class);
-        player.entity().position.x = Calc.clampInt(player.entity().position.x, bounds.x, bounds.x + bounds.w);
-        player.entity().position.y = Calc.clampInt(player.entity().position.y, bounds.y, bounds.y + bounds.h);
+//        player.entity().position.x = Calc.clampInt(player.entity().position.x, bounds.x, bounds.x + bounds.w);
+//        player.entity().position.y = Calc.clampInt(player.entity().position.y, bounds.y, bounds.y + bounds.h);
 
         // find camera targets to follow player
         // NOTE: this is a little silly because depending which way the player is moving ceiling/floor tracks quickly while the other doesn't
@@ -117,11 +120,11 @@ public class TestMain implements Game {
                 : Calc.floor  (Calc.approach(worldCamera.position.x, player.entity().position.x, 400 * dt));
         float targetY = Calc.ceiling(Calc.approach(worldCamera.position.y, player.entity().position.y, 100 * dt));
 
-        // keep camera in bounds
-        int halfViewW = (int) worldCamera.viewportWidth / 2;
-        int halfViewH = (int) worldCamera.viewportHeight / 2;
-        targetX = Calc.clampInt((int) targetX, bounds.x + halfViewW, bounds.x + bounds.w - halfViewW);
-        targetY = Calc.clampInt((int) targetY, bounds.y + halfViewH, bounds.y + bounds.h - halfViewH);
+//        // keep camera in bounds
+//        int halfViewW = (int) worldCamera.viewportWidth / 2;
+//        int halfViewH = (int) worldCamera.viewportHeight / 2;
+//        targetX = Calc.clampInt((int) targetX, bounds.x + halfViewW, bounds.x + bounds.w - halfViewW);
+//        targetY = Calc.clampInt((int) targetY, bounds.y + halfViewH, bounds.y + bounds.h - halfViewH);
 
         worldCamera.position.set(targetX, targetY, 0);
         worldCamera.update();
