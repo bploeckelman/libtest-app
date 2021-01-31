@@ -112,20 +112,23 @@ public class TestMain implements Game {
         if      (mover.speed.y > 0 && player.entity().position.y > roomBounds.top())    yOffset =  1;
         else if (mover.speed.y < 0 && player.entity().position.y < roomBounds.bottom()) yOffset = -1;
 
-        // if player is trying to move out of the current room, are they trying to move into a new room?
-        Room nextRoom = Assets.findRoom(world, Point.at(room.coord.x + xOffset, room.coord.y + yOffset));
-        if (nextRoom == null) {
-            // no new room in this direction, just clamp the player position to this room's bounds
-            player.entity().position.x = Calc.clampInt(player.entity().position.x, roomBounds.x, roomBounds.x + roomBounds.w);
-            player.entity().position.y = Calc.clampInt(player.entity().position.y, roomBounds.y, roomBounds.y + roomBounds.h);
-        } else {
-            // TODO: add room transition camera behavior
-            room = nextRoom;
-            RectI.at(
-                    room.entity().position.x,
-                    room.entity().position.y,
-                    room.size.x, room.size.y
-            );
+        // only perform next room lookup if player actually moved into another room
+        if (xOffset != 0 || yOffset != 0) {
+            // if player is trying to move out of the current room, are they trying to move into a new room?
+            Room nextRoom = Assets.findRoom(world, Point.at(room.coord.x + xOffset, room.coord.y + yOffset));
+            if (nextRoom == null) {
+                // no new room in this direction, just clamp the player position to this room's bounds
+                player.entity().position.x = Calc.clampInt(player.entity().position.x, roomBounds.x, roomBounds.x + roomBounds.w);
+                player.entity().position.y = Calc.clampInt(player.entity().position.y, roomBounds.y, roomBounds.y + roomBounds.h);
+            } else {
+                // TODO: add room transition camera behavior
+                room = nextRoom;
+                RectI.at(
+                        room.entity().position.x,
+                        room.entity().position.y,
+                        room.size.x, room.size.y
+                );
+            }
         }
 
         // TODO: improve camera following behavior
