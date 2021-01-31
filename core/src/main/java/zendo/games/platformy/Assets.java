@@ -62,8 +62,10 @@ public class Assets extends Content {
     }
 
     public static void loadRooms(World world) {
-        loadRoom(Point.at(0, 0), world);
-//        loadRoom(Point.at(1, 0), world);
+        Room room1 = loadRoom(Point.at(0, 0), world);
+        Room room2 = loadRoom(Point.at(1, 0), world);
+        // TODO: hack to place second room until we place adjacent rooms correctly or do some other clever transition thing
+        room2.entity().position.x += room1.size.x;
     }
 
     public static void unloadRooms(World world) {

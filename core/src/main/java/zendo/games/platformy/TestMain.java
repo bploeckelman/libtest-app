@@ -98,15 +98,39 @@ public class TestMain implements Game {
 
         // TODO: change to check for another room attached to this room at the out-of-bounds point and transition to a new room if one exists
 
-        // keep player in bounds
-        RectI bounds = RectI.at(
+        // check for room transition
+        Player player = world.first(Player.class);
+        Mover mover = player.get(Mover.class);
+        RectI roomBounds = RectI.at(
                 room.entity().position.x,
                 room.entity().position.y,
                 room.size.x, room.size.y);
 
-        Player player = world.first(Player.class);
-        player.entity().position.x = Calc.clampInt(player.entity().position.x, bounds.x, bounds.x + bounds.w);
-        player.entity().position.y = Calc.clampInt(player.entity().position.y, bounds.y, bounds.y + bounds.h);
+        // check whether player is moving out of the current room
+        int xOffset = 0;
+        int yOffset = 0;
+        if      (mover.speed.x > 0 && player.entity().position.x > roomBounds.right())  xOffset =  1;
+        else if (mover.speed.x < 0 && player.entity().position.x < roomBounds.left())   xOffset = -1;
+        if      (mover.speed.y > 0 && player.entity().position.y > roomBounds.top())    yOffset =  1;
+        else if (mover.speed.y < 0 && player.entity().position.y < roomBounds.bottom()) yOffset = -1;
+
+        // if player is trying to move out of the current room, are they trying to move into a new room?
+        Room nextRoom = Assets.findRoom(world, Point.at(room.coord.x + xOffset, room.coord.y + yOffset));
+        if (nextRoom == null) {
+            // no new room in this direction, just clamp the player position to this room's bounds
+            player.entity().position.x = Calc.clampInt(player.entity().position.x, roomBounds.x, roomBounds.x + roomBounds.w);
+            player.entity().position.y = Calc.clampInt(player.entity().position.y, roomBounds.y, roomBounds.y + roomBounds.h);
+        } else {
+            // TODO: add room transition camera behavior
+            room = nextRoom;
+            RectI.at(
+                    room.entity().position.x,
+                    room.entity().position.y,
+                    room.size.x, room.size.y
+            );
+        }
+
+        // TODO: improve camera following behavior
 
         // find camera targets to follow player
         // NOTE: this is a little silly because depending which way the player is moving ceiling/floor tracks quickly while the other doesn't
@@ -118,9 +142,8 @@ public class TestMain implements Game {
         // keep camera in bounds
         int halfViewW = (int) worldCamera.viewportWidth / 2;
         int halfViewH = (int) worldCamera.viewportHeight / 2;
-        targetX = Calc.clampInt((int) targetX, bounds.x + halfViewW, bounds.x + bounds.w - halfViewW);
-        targetY = Calc.clampInt((int) targetY, bounds.y + halfViewH, bounds.y + bounds.h - halfViewH);
-
+        targetX = Calc.clampInt((int) targetX, roomBounds.x + halfViewW, roomBounds.x + roomBounds.w - halfViewW);
+        targetY = Calc.clampInt((int) targetY, roomBounds.y + halfViewH, roomBounds.y + roomBounds.h - halfViewH);
         worldCamera.position.set(targetX, targetY, 0);
         worldCamera.update();
     }
