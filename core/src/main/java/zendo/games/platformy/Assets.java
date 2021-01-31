@@ -5,10 +5,12 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject;
 import com.badlogic.gdx.utils.Array;
+import zendo.games.platformy.components.Room;
 import zendo.games.zenlib.assets.Content;
 import zendo.games.zenlib.components.Collider;
 import zendo.games.zenlib.components.Tilemap;
@@ -61,6 +63,7 @@ public class Assets extends Content {
         rooms.add(loadRoom(Point.at(1, 0), world));
     }
 
+    // TODO: maybe remove rooms array and just do lookup through world for Room components?
     public static Room findRoom(Point coord) {
         if (rooms == null) {
             return null;
@@ -96,12 +99,16 @@ public class Assets extends Content {
             return null;
         }
 
-        Room room = new Room();
-        {
-            room.coord.set(coord.x, coord.y);
+        // create a map entity
+        Entity entity = world.addEntity();
 
+        // add a Room component
+        Room room = entity.add(new Room(), Room.class);
+        {
             // load the map
             room.map = new TmxMapLoader().load(filename);
+
+            room.coord.set(coord.x, coord.y);
 
             // get tiled map parameters
             TiledMapTileLayer collisionLayer = (TiledMapTileLayer) room.map.getLayers().get("collision");
@@ -114,24 +121,16 @@ public class Assets extends Content {
 
             // find the original by checking for neighbors
             // TODO: add map objects to tie adjacent rooms together
-            Room leftRoom = findRoom(Point.at(room.coord.x - 1, room.coord.y));
-            if (leftRoom != null) {
-                room.origin.x += leftRoom.origin.x + leftRoom.size.x;
-            }
 
-            // create a map entity
-            // TODO: instead of origin, could set entity.position
-            Entity map = world.addEntity();
+            // TODO: set entity.position
 
             // add a tilemap component for textures
-            room.tilemap = map.add(new Tilemap(), Tilemap.class);
+            room.tilemap = entity.add(new Tilemap(), Tilemap.class);
             room.tilemap.init(tileSize, columns, rows);
-            room.tilemap.origin.set(room.origin.x, room.origin.y);
 
             // add a collider component
-            room.solids = map.add(Collider.makeGrid(tileSize, columns, rows), Collider.class);
+            room.solids = entity.add(Collider.makeGrid(tileSize, columns, rows), Collider.class);
             room.solids.mask = Mask.solid;
-            room.solids.origin.set(room.origin.x, room.origin.y);
 
             // parse the tiled map layers
             for (MapLayer layer : room.map.getLayers()) {
