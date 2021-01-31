@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.MapLayer;
-import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject;
@@ -27,8 +26,6 @@ public class Assets extends Content {
     public static Texture pixel;
     private static TextureAtlas atlas;
 
-    public static Array<Room> rooms;
-
     public static void load() {
         font = new BitmapFont();
         pixel = new Texture("pixel.png");
@@ -43,42 +40,35 @@ public class Assets extends Content {
         );
     }
 
-    public static void unload() {
+    public static void unload(World world) {
+        Assets.unloadRooms(world);
+
         Content.unload();
-        Assets.unloadRooms();
 
         atlas.dispose();
         pixel.dispose();
         font.dispose();
     }
 
-    public static void loadRooms(World world) {
-        if (rooms == null) {
-            rooms = new Array<>();
-        } else {
-            Assets.unloadRooms();
-        }
-
-        rooms.add(loadRoom(Point.at(0, 0), world));
-        rooms.add(loadRoom(Point.at(1, 0), world));
-    }
-
-    // TODO: maybe remove rooms array and just do lookup through world for Room components?
-    public static Room findRoom(Point coord) {
-        if (rooms == null) {
-            return null;
-        }
-
-        for (Room room : rooms) {
+    public static Room findRoom(World world, Point coord) {
+        Room room = world.first(Room.class);
+        while (room != null) {
             if (room.coord.x == coord.x && room.coord.y == coord.y) {
                 return room;
             }
+            room = (Room) room.next();
         }
         return null;
     }
 
-    public static void unloadRooms() {
-        for (Room room : rooms) {
+    public static void loadRooms(World world) {
+        loadRoom(Point.at(0, 0), world);
+//        loadRoom(Point.at(1, 0), world);
+    }
+
+    public static void unloadRooms(World world) {
+        Room room = world.first(Room.class);
+        while (room != null) {
             if (room.map != null) {
                 room.map.dispose();
             }
@@ -88,8 +78,8 @@ public class Assets extends Content {
             if (room.solids != null) {
                 room.solids.destroy();
             }
+            room = (Room) room.next();
         }
-        rooms.clear();
     }
 
     public static Room loadRoom(Point coord, World world) {
