@@ -96,8 +96,6 @@ public class TestMain implements Game {
 
         world.update(dt);
 
-        // TODO: change to check for another room attached to this room at the out-of-bounds point and transition to a new room if one exists
-
         // check for room transition
         Player player = world.first(Player.class);
         Mover mover = player.get(Mover.class);
