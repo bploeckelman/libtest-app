@@ -62,10 +62,35 @@ public class Assets extends Content {
     }
 
     public static void loadRooms(World world) {
-        Room room1 = loadRoom(Point.at(0, 0), world);
-        Room room2 = loadRoom(Point.at(1, 0), world);
-        // TODO: hack to place second room until we place adjacent rooms correctly or do some other clever transition thing
-        room2.entity().position.x += room1.size.x;
+        loadRoom(Point.at(0, 0), world);
+        loadRoom(Point.at(1, 0), world);
+
+        // TODO: should probably make sure the links are valid
+        // position rooms based on their links
+        Room room = world.first(Room.class);
+        while (room != null) {
+            for (Room.Link targetLink : room.links) {
+                Room targetRoom = findRoom(world, targetLink.target);
+                if (targetRoom == null) {
+                    Gdx.app.log(tag, "Invalid room-link, "
+                            + "target not found: " + targetLink.target.x + ", " + targetLink.target.y + " "
+                            + "from room " + room.coord.x + ", " + room.coord.y + "; skipping");
+                } else {
+                    // find corresponding link in target room so we only process a link once
+                    Room.Link backLink = targetRoom.findLink(room.coord);
+                    if (backLink != null) {
+                        // this is the corresponding link, position target room to make targetLink and backLink positions adjacent
+                        // TODO: for now we know the orientation so just set the xpos
+                        //       need to determine orientation and base it on that,
+                        //       also take into account existing target room position
+                        // NOTE: link position is bottom left corner of grid cell
+                        int tileSize = 16; // room.tilemap.tileSize
+                        targetRoom.entity().position.x = targetLink.position.x + tileSize;
+                    }
+                }
+            }
+            room = (Room) room.next();
+        }
     }
 
     public static void unloadRooms(World world) {
@@ -80,6 +105,7 @@ public class Assets extends Content {
             if (room.solids != null) {
                 room.solids.destroy();
             }
+            room.links.clear();
             room = (Room) room.next();
         }
     }
@@ -110,11 +136,6 @@ public class Assets extends Content {
 
             // set the room size (in pixels)
             room.size.set(columns * tileSize, rows * tileSize);
-
-            // find the original by checking for neighbors
-            // TODO: add map objects to tie adjacent rooms together
-
-            // TODO: set entity.position
 
             // add a tilemap component for textures
             room.tilemap = entity.add(new Tilemap(), Tilemap.class);
@@ -176,6 +197,11 @@ public class Assets extends Content {
                                     Factory.blob(world, position);
                                     break;
                             }
+                        }
+                        else if ("room-link".equals(type)) {
+                            int x = object.getProperties().get("target-x", Integer.class);
+                            int y = object.getProperties().get("target-y", Integer.class);
+                            room.links.add(new Room.Link(x, y, position.x, position.y));
                         }
                     }
                 }

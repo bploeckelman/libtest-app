@@ -87,6 +87,10 @@ public class Player extends Component {
         if (Gdx.input.isKeyJustPressed(Input.Keys.CONTROL_LEFT) || (controller != null && controller.getButton(controller_button_x))) input.attack = true;
     }
 
+    public int getFacing() {
+        return facing;
+    }
+
     @Override
     public void update(float dt) {
         // get input

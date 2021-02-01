@@ -16,6 +16,7 @@ import zendo.games.platformy.components.Room;
 import zendo.games.platformy.config.Config;
 import zendo.games.platformy.config.Debug;
 import zendo.games.zenlib.Game;
+import zendo.games.zenlib.components.Animator;
 import zendo.games.zenlib.components.Collider;
 import zendo.games.zenlib.components.Mover;
 import zendo.games.zenlib.ecs.Entity;
@@ -47,7 +48,7 @@ public class TestMain implements Game {
     float transitionEase;
     boolean transitioning;
 
-    final float transition_duration = 1;
+    final float transition_duration = 0.66f;
 
     @Override
     public void init() {
@@ -131,8 +132,8 @@ public class TestMain implements Game {
             transitionEase = Calc.approach(transitionEase, 1f, Time.delta / transition_duration);
 
             // lerp camera position
-            targetX = transitionLastCameraTarget.x + (transitionNextCameraTarget.x - transitionLastCameraTarget.x) * Interpolation.pow3.apply(transitionEase);
-            targetY = transitionLastCameraTarget.y + (transitionNextCameraTarget.y - transitionLastCameraTarget.y) * Interpolation.pow3.apply(transitionEase);
+            targetX = transitionLastCameraTarget.x + (transitionNextCameraTarget.x - transitionLastCameraTarget.x) * Interpolation.pow5.apply(transitionEase);
+            targetY = transitionLastCameraTarget.y + (transitionNextCameraTarget.y - transitionLastCameraTarget.y) * Interpolation.pow5.apply(transitionEase);
             worldCamera.position.set(targetX, targetY, 0);
 
             // finish transition
@@ -191,9 +192,12 @@ public class TestMain implements Game {
                     transitionLastCameraTarget.set((int) worldCamera.position.x, (int) worldCamera.position.y);
 
                     // save the target camera position
-                    // TODO: nextRoom target should be parsed from the map objects that tie rooms together
-                    targetX = Calc.clampInt(roomBounds.x, roomBounds.x + halfViewW, roomBounds.x + roomBounds.w - halfViewW);
-                    targetY = Calc.clampInt(roomBounds.y, roomBounds.y + halfViewH, roomBounds.y + roomBounds.h - halfViewH);
+                    // TODO: the link position is the bottom left corner of a tile so it's a little off
+                    Room.Link link = room.findLink(lastRoom.coord);
+                    targetX = room.entity().position.x + link.position.x;
+                    targetY = room.entity().position.y + link.position.y - 16;
+                    targetX = Calc.clampInt((int) targetX, roomBounds.x + halfViewW, roomBounds.x + roomBounds.w - halfViewW);
+                    targetY = Calc.clampInt((int) targetY, roomBounds.y + halfViewH, roomBounds.y + roomBounds.h - halfViewH);
                     transitionNextCameraTarget.set((int) targetX, (int) targetY);
 
                     // save entities from last room to be removed when transition is complete
@@ -207,6 +211,10 @@ public class TestMain implements Game {
                         }
                         entity = entity.next();
                     }
+
+                    // disable any squishing/stretching that the player is currently doing
+                    Animator anim = player.get(Animator.class);
+                    anim.scale.set(player.getFacing(), 1);
                 }
             } else {
                 // just normal player movement, no room transition
