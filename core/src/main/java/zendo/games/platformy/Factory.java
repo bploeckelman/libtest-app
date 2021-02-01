@@ -1,5 +1,6 @@
 package zendo.games.platformy;
 
+import zendo.games.platformy.components.Enemy;
 import zendo.games.platformy.components.Player;
 import zendo.games.zenlib.components.*;
 import zendo.games.zenlib.ecs.Entity;
@@ -30,6 +31,7 @@ public class Factory {
 
     public static Entity blob(World world, Point position) {
         Entity en = world.addEntity(position);
+        en.add(new Enemy(), Enemy.class);
 
         Animator anim = en.add(new Animator("blob"), Animator.class);
         anim.play("idle");
