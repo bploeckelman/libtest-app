@@ -5,6 +5,7 @@ import com.badlogic.gdx.utils.Array;
 import zendo.games.zenlib.components.Collider;
 import zendo.games.zenlib.components.Tilemap;
 import zendo.games.zenlib.ecs.Component;
+import zendo.games.zenlib.ecs.Entity;
 import zendo.games.zenlib.utils.Point;
 
 public class Room extends Component {
@@ -15,6 +16,7 @@ public class Room extends Component {
     public Point size = Point.zero();
     public Point coord = Point.zero();
     public Array<Link> links = new Array<>();
+    public Array<Entity> platforms = new Array<>();
 
     public static class Link {
         public Point targetCoord;
@@ -43,11 +45,12 @@ public class Room extends Component {
         super.copyFrom(other);
         if (other instanceof Room) {
             Room room = (Room) other;
-            this.map     = room.map;
-            this.tilemap = room.tilemap;
-            this.solids  = room.solids;
-            this.size    = room.size;
-            this.coord   = room.coord;
+            this.map       = room.map;
+            this.tilemap   = room.tilemap;
+            this.solids    = room.solids;
+            this.size      = room.size;
+            this.coord     = room.coord;
+            this.platforms = room.platforms;
         }
     }
 

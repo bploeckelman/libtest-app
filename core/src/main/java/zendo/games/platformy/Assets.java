@@ -19,6 +19,7 @@ import zendo.games.zenlib.ecs.Mask;
 import zendo.games.zenlib.ecs.World;
 import zendo.games.zenlib.utils.Calc;
 import zendo.games.zenlib.utils.Point;
+import zendo.games.zenlib.utils.RectI;
 
 public class Assets extends Content {
 
@@ -55,7 +56,7 @@ public class Assets extends Content {
     public static Room findRoom(World world, Point coord) {
         Room room = world.first(Room.class);
         while (room != null) {
-            if (room.coord.x == coord.x && room.coord.y == coord.y) {
+            if (room.coord.is(coord)) {
                 return room;
             }
             room = (Room) room.next();
@@ -69,6 +70,14 @@ public class Assets extends Content {
         loadRoom(Point.at(1, 0), world);
 
         linkRooms(world);
+
+        Room room = world.first(Room.class);
+        while (room != null) {
+            for (Entity platform : room.platforms) {
+                platform.position.add(room.entity().position);
+            }
+            room = (Room) room.next();
+        }
     }
 
     private static void linkRooms(World world) {
@@ -103,7 +112,7 @@ public class Assets extends Content {
                                     + "src and dest rooms must differ only on one axis");
                         } else {
                             // use the orientation to position dstRoom relative to srcRoom
-                            int tileSize = 16; // room.tilemap.tileSize
+                            int tileSize = dstRoom.tilemap.getTileSize();
 
                             // dst to the right of src
                             if (orientSrcToDst.x > 0) {
@@ -117,12 +126,12 @@ public class Assets extends Content {
                             }
                             // dst above src
                             else if (orientSrcToDst.y > 0) {
-                                dstRoom.entity().position.x = 0;
+                                dstRoom.entity().position.x = srcRoom.entity().position.x + linkSrcToDst.position.x - linkDstToSrc.position.x;
                                 dstRoom.entity().position.y = srcRoom.entity().position.y + linkSrcToDst.position.y + tileSize;
                             }
                             // dst below src
                             else if (orientSrcToDst.y < 0) {
-                                dstRoom.entity().position.x = 0;
+                                dstRoom.entity().position.x = srcRoom.entity().position.x + linkSrcToDst.position.x - linkDstToSrc.position.x;
                                 dstRoom.entity().position.y = srcRoom.entity().position.y - dstRoom.size.y;
                             }
                         }
@@ -144,6 +153,12 @@ public class Assets extends Content {
             }
             if (room.solids != null) {
                 room.solids.destroy();
+            }
+            if (room.platforms != null) {
+                for (Entity platform : room.platforms) {
+                    platform.destroy();
+                }
+                room.platforms.clear();
             }
             room.links.clear();
             room = (Room) room.next();
@@ -200,14 +215,25 @@ public class Assets extends Content {
                             // determine what type of layer this is
                             boolean isCollision = "collision".equals(layer.getName());
                             boolean isBackground = "background".equals(layer.getName());
+                            boolean isJumpthrough = "jumpthrough".equals(layer.getName());
 
                             // only collision layer tiles are used to populate the collider grid
                             if (isCollision) {
                                 room.solids.setCell(x, y, true);
                             }
 
+                            // jumpthrough tiles are added as an entity with its own collider
+                            if (isJumpthrough) {
+                                Entity platform = world.addEntity(Point.at(x * tileSize, y * tileSize));
+                                Collider collider = platform.add(
+                                        Collider.makeRect(RectI.at(0, 0, tileSize, tileSize)),
+                                        Collider.class);
+                                collider.mask = Mask.jumpthrough;
+                                room.platforms.add(platform);
+                            }
+
                             // both collision and background layers are used to set tile textures
-                            if (isCollision || isBackground) {
+                            if (isCollision || isBackground || isJumpthrough) {
                                 room.tilemap.setCell(x, y, cell.getTile().getTextureRegion());
                             }
                         }
@@ -264,6 +290,7 @@ public class Assets extends Content {
                         String target = (String) object.getProperties().get("target");
                         switch (target) {
                             case "player":
+                                // don't spawn players if there's already a player in the world
                                 if (world.first(Player.class) == null) {
                                     Factory.player(world, position);
                                 }
