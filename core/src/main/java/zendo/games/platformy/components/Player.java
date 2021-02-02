@@ -40,19 +40,23 @@ public class Player extends Component {
     private float hurtTimer = 0;
     private float invincibleTimer = 0;
     private boolean onGround = false;
+    private boolean canJump = false;
     private State state = State.normal;
     private Collider attackCollider = null;
 
     private static class InputState {
         int move_dir = 0;
-        boolean run_held = false;
-        boolean jump_held = false;
-        boolean jump = false;
         boolean attack = false;
+        boolean run_held = false;
+        boolean jump = false;
+        boolean jump_held = false;
+        boolean jump_released = false;
     }
     private final InputState input = new InputState();
 
     private void updateInputState() {
+        // TODO: need additional state var to get 'just pressed' for controller buttons
+
         Array<Controller> controllers = Controllers.getControllers();
         Controller controller = controllers.isEmpty() ? null : controllers.get(0);
 
@@ -73,9 +77,10 @@ public class Player extends Component {
         // jump input
         input.jump = false;
         input.jump_held = false;
-        // TODO: need additional state var to get 'just pressed' for controller button
+        input.jump_released = false;
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || (controller != null && controller.getButton(controller_button_a))) input.jump = true;
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE)     || (controller != null && controller.getButton(controller_button_a))) input.jump_held = true;
+        if (!Gdx.input.isKeyPressed(Input.Keys.SPACE)    && ((controller == null) || !controller.getButton(controller_button_a))) input.jump_released = true;
 
         // run input
         input.run_held = false;
@@ -83,7 +88,6 @@ public class Player extends Component {
 
         // attack input
         input.attack = false;
-        // TODO: need additional state var to get 'just pressed' for controller button
         if (Gdx.input.isKeyJustPressed(Input.Keys.CONTROL_LEFT) || (controller != null && controller.getButton(controller_button_x))) input.attack = true;
     }
 
@@ -163,11 +167,16 @@ public class Player extends Component {
 
             // trigger a jump
             {
-                if (input.jump && onGround) {
+                if (onGround && !canJump) {
+                    canJump = input.jump_released;
+                }
+
+                if (input.jump && canJump) {
                     // squoosh on jomp
                     anim.scale.set(facing * 0.65f, 1.4f);
 
                     jumpTimer = jump_time;
+                    canJump = false;
                 }
             }
 
