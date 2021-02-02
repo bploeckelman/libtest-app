@@ -81,7 +81,7 @@ public class TestMain implements Game {
             Gdx.app.error(tag, "Failed to find starting room");
             Gdx.app.exit();
         }
-        Assets.spawnEntities(world, room, true);
+        Assets.spawnEntities(world, room);
 
         // point camera at player
         Player player = world.first(Player.class);

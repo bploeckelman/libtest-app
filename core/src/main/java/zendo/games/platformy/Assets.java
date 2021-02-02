@@ -9,6 +9,7 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.objects.TiledMapTileMapObject;
 import com.badlogic.gdx.utils.Array;
+import zendo.games.platformy.components.Player;
 import zendo.games.platformy.components.Room;
 import zendo.games.zenlib.assets.Content;
 import zendo.games.zenlib.components.Collider;
@@ -241,10 +242,6 @@ public class Assets extends Content {
     }
 
     public static void spawnEntities(World world, Room room) {
-        spawnEntities(world, room, false);
-    }
-
-    public static void spawnEntities(World world, Room room, boolean includingPlayer) {
         TiledMapTileLayer collisionLayer = (TiledMapTileLayer) room.map.getLayers().get("collision");
         int tileSize = collisionLayer.getTileWidth();
 
@@ -267,7 +264,7 @@ public class Assets extends Content {
                         String target = (String) object.getProperties().get("target");
                         switch (target) {
                             case "player":
-                                if (includingPlayer) {
+                                if (world.first(Player.class) == null) {
                                     Factory.player(world, position);
                                 }
                                 break;
