@@ -200,10 +200,10 @@ public class Player extends Component {
                 attackCollider.setRect(-12, 3, 19, 12);
             }
             else if (attackTimer < 0.2f) {
-                attackCollider.setRect(8, 11, 22, 9);
+                attackCollider.setRect(8, 8, 22, 12);
             }
             else if (attackTimer < 0.3f) {
-                attackCollider.setRect(7, 11, 23, 9);
+                attackCollider.setRect(7, 8, 23, 12);
             }
             else if (attackTimer < 0.4f) {
                 attackCollider.setRect(7, 11, 17, 9);
