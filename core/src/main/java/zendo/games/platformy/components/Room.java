@@ -17,21 +17,21 @@ public class Room extends Component {
     public Array<Link> links = new Array<>();
 
     public static class Link {
-        public Point target;
+        public Point targetCoord;
         public Point position;
-        public Link(Point target, Point position) {
-            this.target = target;
+        public Link(Point targetCoord, Point position) {
+            this.targetCoord = targetCoord;
             this.position = position;
         }
         public Link(int x, int y, int tileX, int tileY) {
-            this.target = Point.at(x, y);
+            this.targetCoord = Point.at(x, y);
             this.position = Point.at(tileX, tileY);
         }
     }
 
     public Link findLink(Point coord) {
         for (Link link : links) {
-            if (link.target.x == coord.x && link.target.y == coord.y) {
+            if (link.targetCoord.x == coord.x && link.targetCoord.y == coord.y) {
                 return link;
             }
         }

@@ -2,6 +2,7 @@ package zendo.games.platformy;
 
 import zendo.games.platformy.components.Enemy;
 import zendo.games.platformy.components.Player;
+import zendo.games.platformy.components.Room;
 import zendo.games.zenlib.components.*;
 import zendo.games.zenlib.ecs.Entity;
 import zendo.games.zenlib.ecs.Mask;
@@ -29,9 +30,9 @@ public class Factory {
         return entity;
     }
 
-    public static Entity blob(World world, Point position) {
+    public static Entity blob(World world, Point position, Room room) {
         Entity en = world.addEntity(position);
-        en.add(new Enemy(), Enemy.class);
+        en.add(new Enemy(room), Enemy.class);
 
         Animator anim = en.add(new Animator("blob"), Animator.class);
         anim.play("idle");
@@ -107,19 +108,27 @@ public class Factory {
             if (!mover.onGround()) {
                 self.start(0.05f);
             } else {
-                self.start(2);
-
-                anim.play("jump");
-                mover.speed.y = 110;
-
                 Player player = self.world().first(Player.class);
                 if (player != null) {
-                    float dir = Calc.sign(player.entity().position.x - self.entity().position.x);
-                    if (dir == 0) {
-                        dir = 1;
+                    // are we close enough to the player to jump at them?
+                    float xDist = Calc.abs(player.entity().position.x - self.entity().position.x);
+                    if (xDist > 100) {
+                        // to far, check again in a bit
+                        self.start(0.1f);
+                    } else {
+                        // close enough, perform jump
+                        self.start(2);
+
+                        anim.play("jump");
+                        mover.speed.y = 110;
+
+                        float dir = Calc.sign(player.entity().position.x - self.entity().position.x);
+                        if (dir == 0) {
+                            dir = 1;
+                        }
+                        anim.scale.set(dir, 1);
+                        mover.speed.x = dir * 80;
                     }
-                    anim.scale.set(dir, 1);
-                    mover.speed.x = dir * 80;
                 }
             }
         }), Timer.class);

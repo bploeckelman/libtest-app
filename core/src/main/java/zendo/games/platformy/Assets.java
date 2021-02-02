@@ -16,6 +16,7 @@ import zendo.games.zenlib.components.Tilemap;
 import zendo.games.zenlib.ecs.Entity;
 import zendo.games.zenlib.ecs.Mask;
 import zendo.games.zenlib.ecs.World;
+import zendo.games.zenlib.utils.Calc;
 import zendo.games.zenlib.utils.Point;
 
 public class Assets extends Content {
@@ -62,34 +63,72 @@ public class Assets extends Content {
     }
 
     public static void loadRooms(World world) {
+        loadRoom(Point.at(-1, 0), world);
         loadRoom(Point.at(0, 0), world);
         loadRoom(Point.at(1, 0), world);
 
+        linkRooms(world);
+    }
+
+    private static void linkRooms(World world) {
         // TODO: should probably make sure the links are valid
         // position rooms based on their links
-        Room room = world.first(Room.class);
-        while (room != null) {
-            for (Room.Link targetLink : room.links) {
-                Room targetRoom = findRoom(world, targetLink.target);
-                if (targetRoom == null) {
+        Room srcRoom = world.first(Room.class);
+        while (srcRoom != null) {
+            for (Room.Link linkSrcToDst : srcRoom.links) {
+                Room dstRoom = findRoom(world, linkSrcToDst.targetCoord);
+                if (dstRoom == null) {
                     Gdx.app.log(tag, "Invalid room-link, "
-                            + "target not found: " + targetLink.target.x + ", " + targetLink.target.y + " "
-                            + "from room " + room.coord.x + ", " + room.coord.y + "; skipping");
+                            + "target not found: " + linkSrcToDst.targetCoord.x + ", " + linkSrcToDst.targetCoord.y + " "
+                            + "from room " + srcRoom.coord.x + ", " + srcRoom.coord.y + "; skipping");
                 } else {
-                    // find corresponding link in target room so we only process a link once
-                    Room.Link backLink = targetRoom.findLink(room.coord);
-                    if (backLink != null) {
-                        // this is the corresponding link, position target room to make targetLink and backLink positions adjacent
-                        // TODO: for now we know the orientation so just set the xpos
-                        //       need to determine orientation and base it on that,
-                        //       also take into account existing target room position
-                        // NOTE: link position is bottom left corner of grid cell
-                        int tileSize = 16; // room.tilemap.tileSize
-                        targetRoom.entity().position.x = targetLink.position.x + tileSize;
+                    // find corresponding link in roomB so we only process a link once
+                    Room.Link linkDstToSrc = dstRoom.findLink(srcRoom.coord);
+                    if (linkDstToSrc != null) {
+                        // this is the corresponding link,
+                        // position dstRoom relative to srcRoom
+                        // making linkSrcToDst and linkDstToSrc positions adjacent
+
+                        // determine the orientations of each link within it's room
+                        Point orientSrcToDst = Point.at(
+                                dstRoom.coord.x - srcRoom.coord.x,
+                                dstRoom.coord.y - srcRoom.coord.y);
+
+                        if (Calc.abs(orientSrcToDst.x) > 1 || Calc.abs(orientSrcToDst.y) > 1) {
+                            Gdx.app.log(tag, "Invalid room-link, "
+                                    + "difference between srcRoom and dstRoom coords is > 1");
+                        } else if (Calc.abs(orientSrcToDst.x) > 0 && Calc.abs(orientSrcToDst.y) > 0) {
+                            Gdx.app.log(tag, "Invalid room-link, "
+                                    + "src and dest rooms must differ only on one axis");
+                        } else {
+                            // use the orientation to position dstRoom relative to srcRoom
+                            int tileSize = 16; // room.tilemap.tileSize
+
+                            // dst to the right of src
+                            if (orientSrcToDst.x > 0) {
+                                dstRoom.entity().position.x = srcRoom.entity().position.x + linkSrcToDst.position.x + tileSize;
+                                dstRoom.entity().position.y = srcRoom.entity().position.y + linkSrcToDst.position.y - linkDstToSrc.position.y;
+                            }
+                            // dst to the left of src
+                            else if (orientSrcToDst.x < 0) {
+                                dstRoom.entity().position.x = srcRoom.entity().position.x - dstRoom.size.x;
+                                dstRoom.entity().position.y = srcRoom.entity().position.y + linkSrcToDst.position.y - linkDstToSrc.position.y;
+                            }
+                            // dst above src
+                            else if (orientSrcToDst.y > 0) {
+                                dstRoom.entity().position.x = 0;
+                                dstRoom.entity().position.y = srcRoom.entity().position.y + linkSrcToDst.position.y + tileSize;
+                            }
+                            // dst below src
+                            else if (orientSrcToDst.y < 0) {
+                                dstRoom.entity().position.x = 0;
+                                dstRoom.entity().position.y = srcRoom.entity().position.y - dstRoom.size.y;
+                            }
+                        }
                     }
                 }
             }
-            room = (Room) room.next();
+            srcRoom = (Room) srcRoom.next();
         }
     }
 
@@ -99,7 +138,7 @@ public class Assets extends Content {
             if (room.map != null) {
                 room.map.dispose();
             }
-            if (room.tilemap != null ){
+            if (room.tilemap != null) {
                 room.tilemap.destroy();
             }
             if (room.solids != null) {
@@ -174,6 +213,8 @@ public class Assets extends Content {
                     }
                 }
                 // parse objects layer
+                // note: object spawning is decoupled from other object parsing that occurs during this load
+                //       as we need to be able to spawn all creatures for a room on demand at runtime
                 else if ("objects".equals(layer.getName())) {
                     Array<TiledMapTileMapObject> objects = layer.getObjects().getByType(TiledMapTileMapObject.class);
                     for (TiledMapTileMapObject object : objects) {
@@ -181,24 +222,13 @@ public class Assets extends Content {
                         // scale to specified tileSize in case it's different than the tiled map tile size
                         // this way the scale of the map onscreen can be changed by adjusting the tileSize parameter
                         Point position = Point.at(
-                                (int) (object.getX() / collisionLayer.getTileWidth()) * tileSize,
+                                (int) (object.getX() / collisionLayer.getTileWidth())  * tileSize,
                                 (int) (object.getY() / collisionLayer.getTileHeight()) * tileSize);
 
                         // parse the object type
                         String type = (String) object.getProperties().get("type");
-                        if ("spawner".equals(type)) {
-                            // figure out what to spawn and do so
-                            String target = (String) object.getProperties().get("target");
-                            switch (target) {
-                                case "player":
-                                    Factory.player(world, position);
-                                    break;
-                                case "blob":
-                                    Factory.blob(world, position);
-                                    break;
-                            }
-                        }
-                        else if ("room-link".equals(type)) {
+                        // note - spawner objects are triggered in Assets.spawnEntities()
+                        if ("room-link".equals(type)) {
                             int x = object.getProperties().get("target-x", Integer.class);
                             int y = object.getProperties().get("target-y", Integer.class);
                             room.links.add(new Room.Link(x, y, position.x, position.y));
@@ -208,6 +238,47 @@ public class Assets extends Content {
             }
         }
         return room;
+    }
+
+    public static void spawnEntities(World world, Room room) {
+        spawnEntities(world, room, false);
+    }
+
+    public static void spawnEntities(World world, Room room, boolean includingPlayer) {
+        TiledMapTileLayer collisionLayer = (TiledMapTileLayer) room.map.getLayers().get("collision");
+        int tileSize = collisionLayer.getTileWidth();
+
+        // parse the tiled map object layer and trigger spawners
+        for (MapLayer layer : room.map.getLayers()) {
+            if ("objects".equals(layer.getName())) {
+                Array<TiledMapTileMapObject> objects = layer.getObjects().getByType(TiledMapTileMapObject.class);
+                for (TiledMapTileMapObject object : objects) {
+                    // parse position property from object
+                    // scale to specified tileSize in case it's different than the tiled map tile size
+                    // this way the scale of the map onscreen can be changed by adjusting the tileSize parameter
+                    Point position = Point.at(
+                            room.entity().position.x + (int) (object.getX() / collisionLayer.getTileWidth())  * tileSize,
+                            room.entity().position.y + (int) (object.getY() / collisionLayer.getTileHeight()) * tileSize);
+
+                    // parse the object type
+                    String type = (String) object.getProperties().get("type");
+                    if ("spawner".equals(type)) {
+                        // figure out what to spawn and do so
+                        String target = (String) object.getProperties().get("target");
+                        switch (target) {
+                            case "player":
+                                if (includingPlayer) {
+                                    Factory.player(world, position);
+                                }
+                                break;
+                            case "blob":
+                                Factory.blob(world, position, room);
+                                break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }

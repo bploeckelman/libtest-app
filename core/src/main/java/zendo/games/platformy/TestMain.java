@@ -28,6 +28,8 @@ import zendo.games.zenlib.utils.Time;
 
 public class TestMain implements Game {
 
+    private static final String tag = TestMain.class.getSimpleName();
+
     SpriteBatch batch;
     ShapeRenderer shapes;
 
@@ -72,8 +74,16 @@ public class TestMain implements Game {
         world = new World();
 
         Assets.loadRooms(world);
-        room = Assets.findRoom(world, Point.at(0, 0));
 
+        // setup the starting room
+        room = Assets.findRoom(world, Point.at(-1, 0));
+        if (room == null) {
+            Gdx.app.error(tag, "Failed to find starting room");
+            Gdx.app.exit();
+        }
+        Assets.spawnEntities(world, room, true);
+
+        // point camera at player
         Player player = world.first(Player.class);
         worldCamera.position.set(player.entity().position.x, player.entity().position.y, 0);
         worldCamera.update();
@@ -114,10 +124,9 @@ public class TestMain implements Game {
             }
         }
 
+        // setup some variables for the update loop
         Player player = world.first(Player.class);
         Mover mover = player.get(Mover.class);
-
-        // find camera targets to follow player
         RectI roomBounds = RectI.at(
                 room.entity().position.x,
                 room.entity().position.y,
@@ -142,6 +151,9 @@ public class TestMain implements Game {
                 for (Entity entity : lastRoomEnemies) {
                     world.destroyEntity(entity);
                 }
+
+                // spawn new enemies
+                Assets.spawnEntities(world, room);
 
                 Time.pause_for(0.2f);
                 transitioning = false;
@@ -201,8 +213,6 @@ public class TestMain implements Game {
                     transitionNextCameraTarget.set((int) targetX, (int) targetY);
 
                     // save entities from last room to be removed when transition is complete
-                    // TODO: entities aren't really tied to their room right now,
-                    //       have to decide whether to do that (add another component or maybe a room coord field?)
                     lastRoomEnemies.clear();
                     Entity entity = world.firstEntity();
                     while (entity != null) {
