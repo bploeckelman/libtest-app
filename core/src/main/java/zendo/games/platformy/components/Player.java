@@ -132,7 +132,9 @@ public class Player extends Component {
                     anim.play("run");
 //                    anim.speed = (input.run_held) ? 1.4f : 1;
                 } else {
-                    anim.play("idle");
+                    if (wasOnGround) {
+                        anim.play("idle");
+                    }
                 }
             } else {
                 if (mover.speed.y > 0) {
