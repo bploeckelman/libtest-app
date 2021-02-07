@@ -38,6 +38,7 @@ public class Assets extends Content {
         atlas = new TextureAtlas("atlas/sprites.atlas");
         sprites.addAll(
                   Content.loadSprite("sprites/player.json", atlas)
+                , Content.loadSprite("sprites/bouncer.json", atlas)
                 , Content.loadSprite("sprites/blob.json", atlas)
                 , Content.loadSprite("sprites/pop.json", atlas)
         );
@@ -297,6 +298,9 @@ public class Assets extends Content {
                                 break;
                             case "blob":
                                 Factory.blob(world, position, room);
+                                break;
+                            case "bouncer":
+                                Factory.bouncer(world, position, room);
                                 break;
                         }
                     }

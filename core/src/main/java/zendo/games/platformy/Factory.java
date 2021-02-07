@@ -149,4 +149,26 @@ public class Factory {
         return en;
     }
 
+    public static Entity bouncer(World world, Point position, Room room) {
+        Entity en = world.addEntity(position);
+        en.add(new Enemy(room), Enemy.class);
+
+        Animator anim = en.add(new Animator("bouncer"), Animator.class);
+        anim.play("idle");
+        anim.depth = 11;
+
+        Collider hitbox = en.add(Collider.makeRect(RectI.at(-5, 12, 10, 10)), Collider.class);
+        hitbox.mask = Mask.enemy;
+
+        Mover mover = en.add(new Mover(), Mover.class);
+        // TODO: pass a direction as an arg and use that to set initial speed
+        mover.speed.x = 100;
+        mover.speed.y = 0;
+        mover.collider = hitbox;
+        mover.onHitX = (self) -> mover.speed.x = -mover.speed.x;
+        mover.onHitY = (self) -> mover.speed.y = -mover.speed.y;
+
+        return en;
+    }
+
 }
