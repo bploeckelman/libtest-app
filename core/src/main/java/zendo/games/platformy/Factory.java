@@ -10,6 +10,7 @@ import zendo.games.zenlib.ecs.World;
 import zendo.games.zenlib.utils.Calc;
 import zendo.games.zenlib.utils.Point;
 import zendo.games.zenlib.utils.RectI;
+import zendo.games.zenlib.utils.Time;
 
 public class Factory {
 
@@ -163,10 +164,27 @@ public class Factory {
         Mover mover = en.add(new Mover(), Mover.class);
         // TODO: pass a direction as an arg and use that to set initial speed
         mover.speed.x = 100;
-        mover.speed.y = 0;
+        mover.speed.y = 100;
         mover.collider = hitbox;
-        mover.onHitX = (self) -> mover.speed.x = -mover.speed.x;
-        mover.onHitY = (self) -> mover.speed.y = -mover.speed.y;
+        mover.onHitX = (self) -> {
+            mover.speed.x = -mover.speed.x;
+            anim.scale.x = 1.2f;
+        };
+        mover.onHitY = (self) -> {
+            mover.speed.y = -mover.speed.y;
+            anim.scale.y = 1.2f;
+        };
+
+        en.add(new Timer(0.1f, (self) -> {
+            self.start(0.1f);
+
+            // lerp scale back to one
+            int facing = 1;
+            anim.scale.set(
+                    Calc.approach(anim.scale.x, facing, 20 * Time.delta),
+                    Calc.approach(anim.scale.y, 1, 20 * Time.delta)
+            );
+        }), Timer.class);
 
         return en;
     }

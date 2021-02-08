@@ -21,11 +21,6 @@
     <property name="target" value="player"/>
    </properties>
   </object>
-  <object id="4" name="spawn bouncer" type="spawner" gid="81" x="160" y="640" width="16" height="16">
-   <properties>
-    <property name="target" value="bouncer"/>
-   </properties>
-  </object>
  </objectgroup>
  <layer id="4" name="jumpthrough" width="20" height="50">
   <data encoding="base64">
